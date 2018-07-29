@@ -56,7 +56,7 @@ namespace ConsoleLedgerApp
             {
                 string userInput = GetInput();
 
-                Method result = CheckUserInput(userInput.Replace(" ", ""));
+                Method result = CheckUserInput(userInput.Replace(" ", "")); // remove whitespace to ensure input matches Method Enums
 
                 switch (result)
                 {
@@ -112,7 +112,7 @@ namespace ConsoleLedgerApp
         /// <returns>If exists returns Method Enum else return Method.Invalid</returns>
         private Method CheckUserInput(string userInput)
         {
-            Method selectedMethod = Method.Invalid;
+            Method selectedMethod = Method.Invalid; // ensures Invalid if user input does not match any of the method Enums
 
             Enum.TryParse(userInput, true, out selectedMethod);
    
@@ -154,7 +154,7 @@ namespace ConsoleLedgerApp
                             Boolean usernameSuccess = CheckUsername(tempUser);
                             if (usernameSuccess == true)
                             {
-                                newUser = tempUser;
+                                newUser = tempUser.ToLower(); // ensures username will always be stored as a lower - ensure passphrase success on decryption
                                 isValidUser = true;
                                 break;
                             }
@@ -191,8 +191,7 @@ namespace ConsoleLedgerApp
                             Boolean passwordSuccess = CheckPassword(tempPassword);
                             if (passwordSuccess == true)
                             {
-
-                                newPassword = PasswordEncryption.Encrypt(tempPassword, tempUser); // Password encryption
+                                newPassword = PasswordEncryption.Encrypt(tempPassword, newUser); // Password encryption
                                 isValidPassword = true;
                                 break;
                             }
@@ -216,7 +215,7 @@ namespace ConsoleLedgerApp
 
                 if (isValidUser && isValidPassword)
                 {
-                    exit = CreateAccount(tempUser, newPassword);
+                    exit = CreateAccount(newUser, newPassword);
                     if(exit == true)
                     {
                         cw("New user has been added. Returning to main menu.");
@@ -266,7 +265,7 @@ namespace ConsoleLedgerApp
         private Boolean ValidUser(string tempUser)
         {
             Boolean isValidUser = false;
-            Regex usernameRegEx = new Regex(@"^(?=.{3,15}$)([A-Za-z0-9][._()\[\]-]?)*$");
+            Regex usernameRegEx = new Regex(@"^(?=.{3,15}$)([A-Za-z]?)*$");
 
             if(! string.IsNullOrEmpty(tempUser) && usernameRegEx.IsMatch(tempUser) && ! tempUser.Any(Char.IsWhiteSpace))
             {
@@ -313,7 +312,7 @@ namespace ConsoleLedgerApp
         /// <returns>Boolean if password is valid.</returns>
         private Boolean CheckPassword(string tempPassword)
         {
-            //Password Length Constents
+            //Password Length Constents - once place to change them if need too.
             const int MIN_LENGTH = 8;
             const int MAX_LENGHT = 15;
 
@@ -365,7 +364,7 @@ namespace ConsoleLedgerApp
             {
                 cw("Password must contain at least one lower case letter. Please try another password.");
             }
-            else if (!hasDigit)
+            else if (! hasDigit)
             {
                 cw("Password must contain at least one digit. Please try another password.");
             }
@@ -430,7 +429,7 @@ namespace ConsoleLedgerApp
 
             cw("Logging into an existing account.");
 
-            while (!exit)
+            while (! exit)
             {
                 cw("Please enter the username.");
 
@@ -573,7 +572,7 @@ namespace ConsoleLedgerApp
                 string userInput = GetInput(); // See Misc Helper Functions
                 Boolean success = false;
 
-                Method result = CheckUserInput(userInput.Replace(" ", ""));
+                Method result = CheckUserInput(userInput.Replace(" ", "")); // remove whitespace to ensure input matches Method Enums
 
                 switch (result)
                 {
@@ -588,13 +587,21 @@ namespace ConsoleLedgerApp
                         break;
                     case Method.Deposit:
                         success = Deposit(activeUser);
+                        if (! success) // if there is an error logout of current user
+                        {
+                            logout = true;
+                        }
                         break;
                     case Method.Withdraw:
                         success = Withdraw(activeUser);
+                        if (! success) // if there is an error logout of current user
+                        {
+                            logout = true;
+                        }
                         break;
                     case Method.CheckBalance:
                         success = CheckBalance(activeUser);
-                        if (! success)
+                        if (! success) // if there is an error logout of current user
                         {
                             logout = true;
                         }
@@ -609,14 +616,14 @@ namespace ConsoleLedgerApp
                         Towel();
                         break;
                     case Method.Help:
-                        GetHelp(); // done
+                        GetHelp(); 
                         break;
-                    case Method.Exit: // done
+                    case Method.Exit: 
                         cw("You cannot exit while logged in to a user account.");
                         cw("Loging out of the user account.");
                         logout = Logout();
                         break;
-                    default: // done
+                    default: 
                         cw("Error processing user Input: " + userInput + ". Please enter a valid Command or type 'Help' for options.");
                         break;
                 }
@@ -708,13 +715,13 @@ namespace ConsoleLedgerApp
             Boolean success = false;
             Boolean exit = false;
 
-            while (!exit)
+            while (! exit)
             {
-                while (!success)
+                while (! success)
                 {
                     string response = GetInput(); // See Misc Helper Functions
 
-                    if (!ToExit(response))
+                    if (! ToExit(response))
                     {
                         success = ValidateAmount(response); // See Misc Helper Functions
                         if (success)
@@ -764,7 +771,7 @@ namespace ConsoleLedgerApp
 
             if (withdrawAmount > 0.0M)
             {
-                Decimal tempBalance = activeUser.CurrentBalance;
+                Decimal tempBalance = activeUser.CurrentBalance; // tempBalance for checking overdraft without actually processing withdraw amount
                 if ((tempBalance -= withdrawAmount) >= 0.0M)
                 {
 
@@ -807,13 +814,13 @@ namespace ConsoleLedgerApp
             Boolean success = false;
             Boolean exit = false;
 
-            while (!exit)
+            while (! exit)
             {
-                while (!success)
+                while (! success)
                 {
                     string response = GetInput(); // See Misc Helper Functions
 
-                    if (!ToExit(response))
+                    if (! ToExit(response))
                     {
                         success = ValidateAmount(response); // See Misc Helper Functions
                         if (success)
@@ -867,7 +874,7 @@ namespace ConsoleLedgerApp
                 }
             }
 
-            if (!exist)
+            if (! exist) // for whatever reason a user account is deleted while another person is logged into the account.
             {
                 cw("Error retrieving balance. User no longer exists!.");
             }
@@ -906,6 +913,7 @@ namespace ConsoleLedgerApp
         {
             cw("This Bank Ledger Application allows you to do the following:");
             cw("To create a new account please use the command 'Create Account'.");
+            cw("Account usernames can only be letters and must be between 3 and 15 charaters long.");
             cw("Account passwords must be between 8 and 15 characters long and contain at least one upper case letter, one lower case letter and one digit.");
             cw("To login to an existing account please use the command 'Login.");
             cw("To make a deposit, be logged into an existing user account and use the command 'Deposit'.");
@@ -952,16 +960,22 @@ namespace ConsoleLedgerApp
         /// <returns>List<Users> of Users</returns>
         private List<Users> GetUsers()
         {
-            List<Users> userList = new List<Users>();
+            List<Users> userList = new List<Users>(); // create an empty List<Users>
+
             try
             {
                 string userJson = File.ReadAllText("../../users.json");
 
-                userList = JsonConvert.DeserializeObject<List<Users>>(userJson);
+                userList = JsonConvert.DeserializeObject<List<Users>>(userJson); // if file exists but is empty, userList = null
             }
-            catch (Exception)
+            catch (Exception) // file doesn't exist
             {
                 cw("There was an error getting the Users.");
+            }
+
+            if(userList == null) // in case the file was created but is empty - Re-assign to empty List<Users>
+            {
+                userList = new List<Users>();
             }
 
             return userList;
@@ -975,6 +989,7 @@ namespace ConsoleLedgerApp
         private Boolean SetUsers(List<Users> usersList)
         {
             Boolean success = false;
+
             try
             {
                 File.WriteAllText(@"../../users.json", JsonConvert.SerializeObject(usersList));
@@ -984,6 +999,7 @@ namespace ConsoleLedgerApp
                     JsonSerializer js = new JsonSerializer();
                     js.Serialize(file, usersList);
                 }
+
                 success = true;
             }
             catch (Exception)
@@ -1050,6 +1066,7 @@ namespace ConsoleLedgerApp
             cw("A towel is just about the most massively useful thing any interstellar Hitchhiker can carry. Partly it has great practical value.");
             cw("More importantly, a towel has immense psychological value.");
         }
+
         /// <summary>
         /// Checks if strings match case insensitive
         /// </summary>
