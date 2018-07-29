@@ -964,7 +964,7 @@ namespace ConsoleLedgerApp
 
             try
             {
-                string userJson = File.ReadAllText("../../users.json");
+                string userJson = File.ReadAllText(@"../../users.json");
 
                 userList = JsonConvert.DeserializeObject<List<Users>>(userJson); // if file exists but is empty, userList = null
             }
