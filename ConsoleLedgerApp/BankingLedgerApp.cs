@@ -128,10 +128,10 @@ namespace ConsoleLedgerApp
         /// </summary>
         private void CreateAccount()
         {
-            string newUser = "";
-            string newPassword = "";
             string tempUser = "";
+            string newUser = "";
             string tempPassword = "";
+            string newPassword = "";
             Boolean exit = false;
             Boolean isValidUser = false;
             Boolean isValidPassword = false;
@@ -142,6 +142,9 @@ namespace ConsoleLedgerApp
                 cw("Please enter new username or type 'exit' to go back to the main menu.");
                 while (! isValidUser)
                 {
+                    tempUser = ""; // ensuring var is cleared before re-assignment
+                    newUser = ""; 
+
                     tempUser = GetInput();
 
                     if(tempUser != "")
@@ -176,6 +179,10 @@ namespace ConsoleLedgerApp
                 cw("Please enter new password or type 'exit to go back to the main menu.");
                 while (! isValidPassword)
                 {
+
+                    tempPassword = "";// ensuring var is cleared before re-assignment
+                    newPassword = "";
+
                     tempPassword = GetInput();
                     if(tempPassword != "")
                     {
@@ -184,7 +191,8 @@ namespace ConsoleLedgerApp
                             Boolean passwordSuccess = CheckPassword(tempPassword);
                             if (passwordSuccess == true)
                             {
-                                newPassword = tempPassword;
+
+                                newPassword = PasswordEncryption.Encrypt(tempPassword, tempUser); // Password encryption
                                 isValidPassword = true;
                                 break;
                             }
@@ -208,7 +216,7 @@ namespace ConsoleLedgerApp
 
                 if (isValidUser && isValidPassword)
                 {
-                    exit = CreateAccount(tempUser, tempPassword);
+                    exit = CreateAccount(tempUser, newPassword);
                     if(exit == true)
                     {
                         cw("New user has been added. Returning to main menu.");
@@ -314,7 +322,7 @@ namespace ConsoleLedgerApp
             Boolean metLength = false;
             Boolean hasUpper = false;
             Boolean hasLower = false;
-            Boolean hasSymbol = false;
+            Boolean hasDigit = false;
 
             if(! tempPassword.Any(Char.IsWhiteSpace))
             {
@@ -334,9 +342,9 @@ namespace ConsoleLedgerApp
                         hasLower = true;
                     }
 
-                    if (tempPassword.Any(Char.IsSymbol)) // Symbol Check
+                    if (tempPassword.Any(Char.IsDigit)) // Digit Check
                     {
-                        hasSymbol = true;
+                        hasDigit = true;
                     }
                 }
             }
@@ -357,12 +365,12 @@ namespace ConsoleLedgerApp
             {
                 cw("Password must contain at least one lower case letter. Please try another password.");
             }
-            else if (! hasSymbol)
+            else if (!hasDigit)
             {
-                cw("Password must contain at least one symbol. Please try another password.");
+                cw("Password must contain at least one digit. Please try another password.");
             }
 
-            if (noSpace && metLength && hasUpper && hasLower && hasSymbol)
+            if (noSpace && metLength && hasUpper && hasLower && hasDigit)
             {
                 isValid = true;
             }
@@ -531,9 +539,17 @@ namespace ConsoleLedgerApp
 
             foreach (Users user in currentUsers)
             {
-                if (CompareStrings(enteredUsername, user.Username, true) && CompareStrings(enteredPassword, user.Password, false))
+                if (CompareStrings(enteredUsername, user.Username, true))
                 {
-                    isValid = true;
+                    string username = user.Username;
+                    string encryptedPassword = user.Password; // encrypted password
+                    string unencryptedPassword = PasswordEncryption.Decrypt(encryptedPassword, username);
+
+                    if(CompareStrings(enteredPassword, unencryptedPassword, false))
+                    {
+                        isValid = true;
+                    }
+                    
                 }
             }
 
@@ -890,7 +906,7 @@ namespace ConsoleLedgerApp
         {
             cw("This Bank Ledger Application allows you to do the following:");
             cw("To create a new account please use the command 'Create Account'.");
-            cw("Account passwords must be between 8 and 15 characters long and contain at least one upper case letter, one lower case letter and one symbol.");
+            cw("Account passwords must be between 8 and 15 characters long and contain at least one upper case letter, one lower case letter and one digit.");
             cw("To login to an existing account please use the command 'Login.");
             cw("To make a deposit, be logged into an existing user account and use the command 'Deposit'.");
             cw("To make a withdraw, be logged into an existing user account and use the command 'Withdraw'.");
